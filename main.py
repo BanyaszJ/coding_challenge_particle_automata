@@ -62,7 +62,7 @@ class Grid:
 
 
 class Particle:
-    def __init__(self, grid_x_pos, grid_y_pos, cell_size, color=(255, 255, 255)):
+    def __init__(self, grid_x_pos, grid_y_pos, cell_size, color, type="sand"):
         """
         Initialize a particle at a specific grid position
 
@@ -113,6 +113,24 @@ class Visualizer:
                          particle_data["cell_size"])
                     )
 
+class Controls:
+    def __init__(self):
+        self.lmb_down_state = False
+        self.rmb_down_state = False
+        self.mmb_down_state = False
+        self.mouse_x = 0
+        self.mouse_y = 0
+
+    def get_control_state(self):
+        """Get the current state of the controls"""
+        return {
+            "lmb_down_state": self.lmb_down_state,
+            "rmb_down_state": self.rmb_down_state,
+            "mmb_down_state": self.mmb_down_state,
+            "mouse_x_pos": self.mouse_x,
+            "mouse_y_pos": self.mouse_y,
+        }
+
 class MainGame:
     def __init__(self):
         pygame.init()
@@ -130,33 +148,42 @@ class MainGame:
 
         self.visualizer = Visualizer()
 
+        # controller
+        self.lmb_down_state = False
+        self.mouse_lmb = 1
+
     def run(self):
         """Main loop of the game.
         :return: None
         """
-
-        self._test_particle = Particle(20,
-                                      20,
-                                      CELL_SIZE,
-                                      color=(255, 255, 0)
-                                      )
-        self.grid.push_particle(self._test_particle)
-        self.grid.print_raw_grid()
 
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    pygame.quit()
+                    sys.exit()
 
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == self.mouse_lmb:
+                        self.lmb_down_state = True
+
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == self.mouse_lmb:
+                        self.lmb_down_state = False
+
+                if self.lmb_down_state:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    grid_x, grid_y = mouse_x // CELL_SIZE, mouse_y // CELL_SIZE
+                    particle = Particle(grid_x, grid_y, CELL_SIZE, color=(255, 255, 0), type="sand")
+                    self.grid.push_particle(particle)
+
+            self.grid.print_raw_grid()
             self.visualizer.push(what=self.grid, where=self.screen)
             pygame.display.flip()
 
             self.clock.tick(self.fps)
-
-        # print(f"Cell data debug: %s " % self.grid.get_cell_data(20,20))
-        pygame.quit()
-        sys.exit()
 
 
 if __name__ == "__main__":
